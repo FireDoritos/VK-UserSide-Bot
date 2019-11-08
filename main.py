@@ -182,8 +182,8 @@ for event in longpoll.listen():
                         vk.users.get(user_ids=myId)[0].get('first_name') + ', не пропусти его, котик ♥',
                 forward_messages=event.message_id)
     if event.type == VkEventType.MESSAGE_NEW and event.text.lower().startswith(
-            startMyContestTrigger) and event.from_me and (startedContest.get(event.peer_id) is False or
-                                                          startedContest.get(event.peer_id) is None):
+            startMyContestTrigger) and event.from_me and event.from_chat and (startedContest.get(event.peer_id) is False
+                                                                        or startedContest.get(event.peer_id) is None):
         if len(event.text) > len(startMyContestTrigger) and event.text.split(' ')[1].isdigit() is True \
                 and not event.text.split(' ')[1] == '0':
             setupTimer.update({event.peer_id: int(event.text.split(' ')[1])})
