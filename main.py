@@ -34,6 +34,7 @@ toDelete = []
 startedContest = {}
 contestPeerId = {}
 contestMsgId = {}
+contestInstructionRow = {}
 contestInstruction = {}
 setupTimer = {}
 contestList = {}
@@ -85,7 +86,7 @@ def contestMember(cmId):
 
 
 def contestValidator():
-    if event.peer_id == contestPeerId.get(event.text):
+    if event.peer_id == contestPeerId.get(event.text.lower()):
         return True
     else:
         return False
@@ -111,7 +112,7 @@ def contestUpdater(cuId):
         try:
             vk.messages.edit(peer_id=localPeerId, message_id=contestMsgId.get(localPeerId),
                              message='Ого! Запущено начало розыгрыша. \nДля принятия участия введите: ' +
-        contestInstruction.get(localPeerId) + '\n\n До окончания розыгрыша: ' + str(
+        contestInstructionRow.get(localPeerId) + '\n\n До окончания розыгрыша: ' + str(
         setupTimer.get(localPeerId)) + 'мин.\n\nУчастники в розыгрыше: '
                                      +', '.join(contestMember(localPeerId)))
         except vk_api.exceptions.ApiError:
@@ -190,12 +191,14 @@ for event in longpoll.listen():
             vk.messages.delete(message_ids=event.message_id, delete_for_all=1)
             try:
                 contestInstruction.update({event.peer_id: ' '.join(
+                    event.text.split(' ')[2:len(event.text.split(' '))]).lower()})
+                contestInstructionRow.update({event.peer_id: ' '.join(
                     event.text.split(' ')[2:len(event.text.split(' '))])})
                 vk.messages.send(
                     peer_id=event.peer_id,
                     random_id=random.randint(1, 922337203685477580),
                     message='Ого! Запущено начало розыгрыша.\nДля принятия участия введите: '
-                        + str(contestInstruction.get(event.peer_id)) +
+                        + str(contestInstructionRow.get(event.peer_id)) +
                         '\n\n До окончания розыгрыша: ' + str(setupTimer.get(event.peer_id)) +
                         'мин.\n\nУчастники в розыгрыше: ')
             except IndexError:
@@ -215,7 +218,7 @@ for event in longpoll.listen():
             try:
                 vk.messages.edit(peer_id=event.peer_id, message_id=contestMsgId.get(event.peer_id),
                                  message='Ого! Запущено начало розыгрыша. \nДля принятия участия введите: ' +
-                                         contestInstruction.get(event.peer_id) + '\n\n До окончания розыгрыша: ' + str(
+                                         contestInstructionRow.get(event.peer_id) + '\n\n До окончания розыгрыша: ' + str(
                                      setupTimer.get(event.peer_id)) +
                                     'мин.\n\nУчастники в розыгрыше: ' +
                                          ', '.join(contestMember(event.peer_id)))
