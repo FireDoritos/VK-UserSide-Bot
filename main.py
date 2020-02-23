@@ -7,9 +7,6 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 vkToken = ""
 # Сюда вставляешь свой токен (Я юзал от кейта. Получить можно тут https://vkhost.github.io )
 
-
-my_id =   # Здесь вводишь свой айди (прим. my_id = 1)
-
 contest_trigger_list = ()  # Листик слов триггеров для уведомления о розыгрыше:
 # Прим. contest_trigger_list = ('розыгрыш', 'конкурс')
 
@@ -38,7 +35,7 @@ contest_instruction = {}
 setup_timer = {}
 contest_list = {}
 contest_member_list = {}
-
+my_id = vk.users.get()[0]["id"]
 
 def msg_delete():
     for n in vk.messages.getHistory(peer_id=event.peer_id).get("items"):
