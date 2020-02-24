@@ -37,6 +37,7 @@ contest_list = {}
 contest_member_list = {}
 my_id = vk.users.get()[0]["id"]
 
+
 def msg_delete():
     for n in vk.messages.getHistory(peer_id=event.peer_id).get("items"):
         if n["from_id"] == my_id and len(to_delete) < to_delete_count:
@@ -184,9 +185,9 @@ for event in longpoll.listen():
             event.type == VkEventType.MESSAGE_NEW
             and event.from_chat
             and any(
-                contest_trigger_word in event.text.lower()
-                for contest_trigger_word in contest_trigger_list
-            )
+        contest_trigger_word in event.text.lower()
+        for contest_trigger_word in contest_trigger_list
+    )
     ):
         if (
                 type(contest_white_list) is tuple
@@ -212,7 +213,7 @@ for event in longpoll.listen():
             and (
             not started_contest.get(event.peer_id)
             or started_contest.get(event.peer_id) is None
-            )
+    )
     ):
         if (
                 len(event.text) > len(start_my_contest_trigger)
