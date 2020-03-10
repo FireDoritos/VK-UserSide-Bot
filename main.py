@@ -1,10 +1,11 @@
+import random
 import threading
 import time
-import random
+
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 
-vkToken = ""
+vk_token = ""
 # Сюда вставляешь свой токен (Я юзал от кейта. Получить можно тут https://vkhost.github.io )
 
 contest_trigger_list = ()  # Листик слов триггеров для уведомления о розыгрыше:
@@ -20,7 +21,15 @@ trigger_word = (
     "None"  # Триггер слово в кавычках, с маленькой буквы для удаления сообщений
 )
 
-vk_session = vk_api.VkApi(token=vkToken)
+layout_swap_trigger = (
+    "None"  # Триггер слово в кавычках, с маленькой буквы для смены раскладки на последнем сообщении
+)
+
+chat_everyone_trigger = (
+    "None"  # Триггер для оповещения всех в беседе
+)
+
+vk_session = vk_api.VkApi(token=vk_token)
 longpoll = VkLongPoll(vk_session)
 vk = vk_session.get_api()
 
@@ -71,15 +80,13 @@ def msg_replace_delete():
 
 
 def contest_member(cm_id):
-    p = 0
-    for _ in contest_member_list.get(cm_id):
+    for p, _ in enumerate(contest_member_list.get(cm_id)):
         n = vk.users.get(user_ids=contest_member_list.get(cm_id)[p])[0].get(
             "first_name"
         )
         o = f"[id{contest_member_list.get(cm_id)[p]}|{n}]"
         if o not in contest_list.get(cm_id):
             contest_list[cm_id].append(o)
-        p += 1
     return contest_list[cm_id]
 
 
@@ -144,6 +151,19 @@ def contest_updater(cu_id):
                 except vk_api.exceptions.ApiError:
                     contest_cleaner(cu_id)
                 break
+
+
+def layout_swapper(message):
+    eng_chars = "~!@#$%^&qwertyuiop[]asdfghjkl;'zxcvbnm,./QWERTYUIOP{}ASDFGHJKL:\"|ZXCVBNM<>?"
+    rus_chars = "ё!\"№;%:?йцукенгшщзхъфывапролджэячсмитьбю.ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭ/ЯЧСМИТЬБЮ,"
+    trans_table = dict(zip(eng_chars + rus_chars, rus_chars + eng_chars))
+    swapped_message = ""
+    for c in message:
+        try:
+            swapped_message += trans_table.get(c)
+        except TypeError:
+            swapped_message += c
+    return swapped_message
 
 
 for event in longpoll.listen():
@@ -216,7 +236,7 @@ for event in longpoll.listen():
     )
     ):
         if (
-                len(event.text) > len(start_my_contest_trigger)
+                len(event.text) > (len(start_my_contest_trigger) + 2)
                 and event.text.split()[1].isdigit()
                 and event.text.split()[1] != "0"
         ):
@@ -282,3 +302,27 @@ for event in longpoll.listen():
                 )
             except vk_api.exceptions.ApiError:
                 contest_cleaner(event.peer_id)
+    if (
+            event.type == VkEventType.MESSAGE_NEW
+            and event.from_me
+            and event.text.lower().startswith(layout_swap_trigger)
+    ):
+        for a, n in enumerate(vk.messages.getHistory(peer_id=event.peer_id).get("items")):
+            if n["from_id"] == my_id:
+                if a != 0:
+                    vk.messages.edit(
+                        peer_id=event.peer_id, message_id=n["id"], message=layout_swapper(n["text"])
+                    )
+                    break
+                else:
+                    vk.messages.delete(
+                        message_ids=n["id"],
+                        delete_for_all=1
+                    )
+    if (
+            event.type == VkEventType.MESSAGE_NEW
+            and event.from_me
+            and event.from_chat
+            and event.text.lower().startswith(chat_everyone_trigger)
+    ):
+        pass
