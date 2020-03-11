@@ -166,6 +166,23 @@ def layout_swapper(message):
     return swapped_message
 
 
+def empty_mentions():
+    user_id_list = [
+        user_data["member_id"] for user_data in vk.messages.getConversationMembers(
+            peer_id=2000000221
+        ).get("items")
+    ]
+    user_id_list.remove(
+        my_id
+    )
+    empty_mentions_string = ' '.join(
+        [
+            f"[id{str(user_id)}|&#12288;]" for user_id in user_id_list
+        ]
+    )
+    return chat_everyone_trigger + empty_mentions_string
+
+
 for event in longpoll.listen():
     if (
             event.type == VkEventType.MESSAGE_NEW
@@ -311,7 +328,9 @@ for event in longpoll.listen():
             if n["from_id"] == my_id:
                 if a != 0:
                     vk.messages.edit(
-                        peer_id=event.peer_id, message_id=n["id"], message=layout_swapper(n["text"])
+                        peer_id=event.peer_id,
+                        message_id=n["id"],
+                        message=layout_swapper(n["text"])
                     )
                     break
                 else:
@@ -325,4 +344,8 @@ for event in longpoll.listen():
             and event.from_chat
             and event.text.lower().startswith(chat_everyone_trigger)
     ):
-        pass
+        vk.messages.edit(
+            peer_id=event.peer_id,
+            message_id=event.message_id,
+            message=empty_mentions()
+        )
