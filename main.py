@@ -168,19 +168,19 @@ def layout_swapper(message):
 
 def empty_mentions():
     user_id_list = [
-        user_data["member_id"] for user_data in vk.messages.getConversationMembers(
-            peer_id=2000000221
+        str(user_data["member_id"]) for user_data in vk.messages.getConversationMembers(
+            peer_id=event.peer_id
         ).get("items")
     ]
     user_id_list.remove(
-        my_id
+        str(my_id)
     )
-    empty_mentions_string = ' '.join(
+    empty_mentions_string = ''.join(
         [
-            f"[id{str(user_id)}|&#12288;]" for user_id in user_id_list
+            f"@{f'club{user_id[1:]}' if user_id.startswith('-') else f'id{user_id}'} (&#12288;)" for user_id in user_id_list
         ]
     )
-    return chat_everyone_trigger + empty_mentions_string
+    return f"{chat_everyone_trigger} {empty_mentions_string}"
 
 
 for event in longpoll.listen():
@@ -347,5 +347,6 @@ for event in longpoll.listen():
         vk.messages.edit(
             peer_id=event.peer_id,
             message_id=event.message_id,
-            message=empty_mentions()
+            message=empty_mentions(),
+            disable_mentions=0
         )
