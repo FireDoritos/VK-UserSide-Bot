@@ -322,7 +322,7 @@ for event in longpoll.listen():
     if (
             event.type == VkEventType.MESSAGE_NEW
             and event.from_me
-            and event.text.lower().startswith(layout_swap_trigger)
+            and event.text.lower() == layout_swap_trigger
     ):
         for a, n in enumerate(vk.messages.getHistory(peer_id=event.peer_id).get("items")):
             if n["from_id"] == my_id:
