@@ -196,13 +196,13 @@ def mention_checker(message):
     if not global_delay:
         if mention_answer_list[2]:
             if (
-                    f" {message} ".find(f" [id{my_id}|@{my_domain}] ") != -1
-                    or f" {message} ".find(f" [id{my_id}|@{my_domain}], ") != -1
+                    f" {message.lower()} ".find(f" [id{my_id}|@{my_domain}] ") != -1
+                    or f" {message.lower()} ".find(f" [id{my_id}|@{my_domain}], ") != -1
             ):
                 return True
             if (
-                    message.find(f" {mention_answer_list[0]}") != -1
-                    or message.startswith(mention_answer_list[0])
+                    message.lower().find(f" {mention_answer_list[0]}") != -1
+                    or message.lower().startswith(mention_answer_list[0])
             ):
                 return True
     else:
