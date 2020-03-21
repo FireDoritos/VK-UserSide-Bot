@@ -32,7 +32,8 @@ chat_everyone_trigger = (
 mention_answer_list = (
     "None",  # Триггер для автоответчика в кавычках;
     [],  # [1, 2, 3] - Заполняете в скобках id стикеров для ответа;
-    False  # Использовать упоминание как дополнительный триггер (наприм. @durov)
+    False,  # Установите True, чтобы использовать упоминание как дополнительный триггер (наприм. @durov)
+    10  # Минимальное время (в секундах) между старой и новой "реакцией" на сообщение
 )
 
 vk_session = vk_api.VkApi(token=vk_token)
@@ -212,7 +213,7 @@ def mention_checker(message):
 def answer_delay():
     global global_delay
     global_delay = True
-    time.sleep(10)
+    time.sleep(mention_answer_list[3])
     global_delay = False
 
 
