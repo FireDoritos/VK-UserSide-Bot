@@ -6,7 +6,7 @@ import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 
 vk_token = ""
-# Сюда вставляешь свой токен (Я юзал от кейта. Получить можно тут https://vkhost.github.io )
+# Сюда вставляешь свой токен. (Я юзал от кейта. Получить можно тут https://vkhost.github.io )
 
 contest_trigger_list = ()  # Листик слов триггеров для уведомления о розыгрыше:
 # Прим. contest_trigger_list = ('розыгрыш', 'конкурс')
@@ -15,18 +15,24 @@ contest_white_list = ()  # Вайтлист айди для триггеров �
 # Прим. contest_white_list = (1, 2, 3)
 
 start_my_contest_trigger = (
-    "None"  # Вводишь в кавычках команду, с которой начинается свой розыгрыш
+    "None"  # Вводишь в кавычках команду, с которой начинается свой розыгрыш.
 )
 trigger_word = (
-    "None"  # Триггер слово в кавычках, с маленькой буквы для удаления сообщений
+    "None"  # Триггер слово в кавычках, с маленькой буквы для удаления сообщений.
 )
 
 layout_swap_trigger = (
-    "None"  # Триггер слово в кавычках, с маленькой буквы для смены раскладки на последнем сообщении
+    "None"  # Триггер слово в кавычках, с маленькой буквы для смены раскладки на последнем сообщении.
 )
 
 chat_everyone_trigger = (
-    "None"  # Триггер для оповещения всех в беседе
+    "None"  # Триггер для оповещения всех в беседе.
+)
+
+mention_answer_list = (
+    "None",  # Триггер для автоответчика в кавычках;
+    [],  # [1, 2, 3] - Заполняете в скобках id стикеров для ответа;
+    False  # Использовать триггер из первой строки как trigger (False) или @trigger (True).
 )
 
 vk_session = vk_api.VkApi(token=vk_token)
@@ -45,6 +51,7 @@ setup_timer = {}
 contest_list = {}
 contest_member_list = {}
 my_id = vk.users.get()[0]["id"]
+global_delay = False
 
 
 def msg_delete():
@@ -183,6 +190,31 @@ def empty_mentions():
     return f"{chat_everyone_trigger} {empty_mentions_string}"
 
 
+def mention_checker(message):
+    if not global_delay:
+        if mention_answer_list[2]:
+            if (
+                    f" {message} ".find(f" [id{my_id}|@{mention_answer_list[0].lower()}] ") != -1
+                    or f" {message} ".find(f" [id{my_id}|@{mention_answer_list[0].lower()}], ") != -1
+            ):
+                return True
+        else:
+            if (
+                    message.find(f" {mention_answer_list[0]}") != -1
+                    or message.startswith(mention_answer_list[0])
+            ):
+                return True
+    else:
+        return False
+
+
+def answer_delay():
+    global global_delay
+    global_delay = True
+    time.sleep(10)
+    global_delay = False
+
+
 for event in longpoll.listen():
     if (
             event.type == VkEventType.MESSAGE_NEW
@@ -253,7 +285,7 @@ for event in longpoll.listen():
     )
     ):
         if (
-                len(event.text) > (len(start_my_contest_trigger) + 2)
+                len(event.text.split()) > 2
                 and event.text.split()[1].isdigit()
                 and event.text.split()[1] != "0"
         ):
@@ -350,3 +382,14 @@ for event in longpoll.listen():
             message=empty_mentions(),
             disable_mentions=0
         )
+    if (
+            event.type == VkEventType.MESSAGE_NEW
+            and event.from_chat
+            and mention_checker(event.text)
+    ):
+        vk.messages.send(
+            peer_id=event.peer_id,
+            random_id=0,
+            sticker_id=random.choice(mention_answer_list[1]),
+        )
+        threading.Thread(target=answer_delay, args=()).start()
