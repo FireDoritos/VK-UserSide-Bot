@@ -32,7 +32,7 @@ chat_everyone_trigger = (
 mention_answer_list = (
     "None",  # Триггер для автоответчика в кавычках;
     [],  # [1, 2, 3] - Заполняете в скобках id стикеров для ответа;
-    False  # Использовать триггер из первой строки как trigger (False) или @trigger (True).
+    False  # Использовать упоминание как дополнительный триггер (наприм. @durov)
 )
 
 vk_session = vk_api.VkApi(token=vk_token)
@@ -50,7 +50,9 @@ contest_instruction = {}
 setup_timer = {}
 contest_list = {}
 contest_member_list = {}
-my_id = vk.users.get()[0]["id"]
+user_get_self = vk.users.get(fields='domain')[0]
+my_id = user_get_self["id"]
+my_domain = user_get_self["domain"]
 global_delay = False
 
 
@@ -182,9 +184,9 @@ def empty_mentions():
     user_id_list.remove(
         str(my_id)
     )
-    empty_mentions_string = ''.join(
+    empty_mentions_string = ' '.join(
         [
-            f"@{f'club{user_id[1:]}' if user_id.startswith('-') else f'id{user_id}'} (&#12288;)" for user_id in user_id_list
+            f"@{f'club{user_id[1:]}' if user_id.startswith('-') else f'id{user_id}'} (&#8300;)" for user_id in user_id_list
         ]
     )
     return f"{chat_everyone_trigger} {empty_mentions_string}"
@@ -194,11 +196,10 @@ def mention_checker(message):
     if not global_delay:
         if mention_answer_list[2]:
             if (
-                    f" {message} ".find(f" [id{my_id}|@{mention_answer_list[0].lower()}] ") != -1
-                    or f" {message} ".find(f" [id{my_id}|@{mention_answer_list[0].lower()}], ") != -1
+                    f" {message} ".find(f" [id{my_id}|@{my_domain}] ") != -1
+                    or f" {message} ".find(f" [id{my_id}|@{my_domain}], ") != -1
             ):
                 return True
-        else:
             if (
                     message.find(f" {mention_answer_list[0]}") != -1
                     or message.startswith(mention_answer_list[0])
@@ -374,13 +375,16 @@ for event in longpoll.listen():
             event.type == VkEventType.MESSAGE_NEW
             and event.from_me
             and event.from_chat
-            and event.text.lower().startswith(chat_everyone_trigger)
+            and event.text.lower() == chat_everyone_trigger
     ):
-        vk.messages.edit(
+        vk.messages.delete(
+            message_ids=event.message_id,
+            delete_for_all=1
+        )
+        vk.messages.send(
             peer_id=event.peer_id,
-            message_id=event.message_id,
-            message=empty_mentions(),
-            disable_mentions=0
+            random_id=0,
+            message=empty_mentions()
         )
     if (
             event.type == VkEventType.MESSAGE_NEW
@@ -390,6 +394,6 @@ for event in longpoll.listen():
         vk.messages.send(
             peer_id=event.peer_id,
             random_id=0,
-            sticker_id=random.choice(mention_answer_list[1]),
+            sticker_id=random.choice(mention_answer_list[1])
         )
         threading.Thread(target=answer_delay, args=()).start()
