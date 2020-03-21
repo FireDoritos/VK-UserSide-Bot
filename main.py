@@ -201,11 +201,11 @@ def mention_checker(message):
                     or f" {message.lower()} ".find(f" [id{my_id}|@{my_domain}], ") != -1
             ):
                 return True
-            if (
-                    message.lower().find(f" {mention_answer_list[0]}") != -1
-                    or message.lower().startswith(mention_answer_list[0])
-            ):
-                return True
+        if (
+                message.lower().find(f" {mention_answer_list[0]}") != -1
+                or message.lower().startswith(mention_answer_list[0])
+        ):
+            return True
     else:
         return False
 
